@@ -1,0 +1,71 @@
+---
+title: "Discrete Random Variables"
+author: "Claire Herdeman"
+date: "10/6/2018"
+output: html_document
+---
+# TA Session 1
+### Monday, October 8 5:00 - 6:20 PM
+
+## Setup
+
+The section loads libraries that we will need to use to run the code below.
+
+```{r setup}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Probability Mass Function
+
+First, generate some random data from a normal distribution (mean = 0, sd = 1). Round so that our variable is discrete rather than continuous.
+
+```{r gen}
+set.seed(10062018)
+samples = 1000
+dist <- as_data_frame(x = round(rnorm(samples, 0, 1)))
+head(dist)
+```
+
+Now we count the freqency with which each value occurs, then calculate the probability that draw each value.
+
+Does this satisfy the properties of the PMF?
+What is f(-3)? f(0)?
+
+```{r count}
+prob <- dist %>% 
+          count(value) %>% # count how many times each value in the x column occurs
+          mutate(pr = n/samples) # divide the count by sample size to get probability
+
+prob
+```
+
+We can also show the PMF graphically. 
+
+```{r graph}
+dist %>% 
+  ggplot(aes(x = value)) +
+  geom_histogram(binwidth = 1, color = 'black', fill = 'white', alpha = 0.5)  
+```
+
+## Cumulative Distribution Function
+
+We can start from the prob dataframe that we defined above. We will define a new cum column (for cumulative) that is the cumulative sum of all preceding probabilities.
+
+Does this satisfy the properties of the CDF?
+What is F(-3)? F(0)?
+
+```{r cdf}
+prob <- prob %>%
+          mutate(cum = cumsum(pr))
+
+prob
+```
+
+Let's take a graphical look.
+
+```{r cdf_graph}
+dist %>%
+  ggplot(aes(x = value)) +
+  stat_ecdf()
+```

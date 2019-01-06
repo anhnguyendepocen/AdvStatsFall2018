@@ -1,0 +1,125 @@
+---
+title: "Roy Model"
+output: html_document
+---
+
+### Monday, October 8 5:00 - 6:20 PM
+
+## Setup
+
+The section loads libraries that we will need to use to run the code below.
+
+```{r setup}
+# For this session we will load the tidyverse, a commonly used set of R libraries
+# Find more information here: https://www.tidyverse.org/packages/
+library('tidyverse')
+library('MASS')
+```
+
+## Roy Model
+
+In the context of Prof. Black's lecture, the Roy Model was used to motivate the need for economic and statistical models to underly our analysis of observed phenomena in public policy. To (hopefully) illustrate the model as well as some of the power of computational tools, here is a brief simulation of the model. The expectation is NOT that you can put this together yourself right now.
+
+### Generate Random Data
+
+The first step is to generate random data from two correlated distributions with the characteristics described in class, i.e. Economist earnings are normally distributed with mean = 60k and stdev = 10k, and Accountant earnings are normally distributed with mean = 65k and st dev = 5k. This generation will produce data that pairs draws from both distribution, i.e. we are observing for every theoretical individual in our sample both their potential earnings as an accountant and their potential earnings as an economist. 
+
+```{r data}
+set.seed(10042018)
+samples <- 100000 # Sample size or size of population
+cor <- 0.86 # correlation coefficient
+
+# Generate correlated std normal random sample using the mvnorm function from MASS package
+data <- mvrnorm(n=samples, mu=c(0, 0), Sigma=matrix(c(1, cor, cor, 1), nrow=2), empirical=TRUE)
+
+# Convert to dataframe
+df1 <- as_data_frame(data)
+
+# Make the dataframe easier to use 
+df1 <- df1 %>% dplyr::rename(accnt = V1, econ = V2) # rename columns
+
+# Change distributions from std normal to those specified in lecture:
+# Accounting ~ N(65000, 5000)
+# Economics ~ N(60000, 10000)
+mu_econ <- 60000
+sigma_econ <- 10000
+mu_accnt <- 65000
+sigma_accnt <- 5000
+
+df1 <- df1 %>% mutate(
+        accnt = accnt*sigma_accnt + mu_accnt, # update accounting variable
+        econ = econ*sigma_econ + mu_econ # update econ variable
+)
+```
+
+### Sanity Checks
+
+Let's run a few checks to make sure data looks reasonable. First we'll use the `head` and `tail` commands to get a look at the data. Then, we will make sure that the correlation between the accoutant and economist distributions is 0.86, the value we set when we generated the data, using the `cor` command. Finally, we will run the `summarise` command to see the mean, min, max, and quartiles of each of the distributions.
+
+```{r sanity}
+# Look at the first and last 6 rows of the dataframe
+head(df1)
+tail(df1)
+
+# Compare the correlation we set to the correlation we calculate
+check <- round(cor(df1$accnt, df1$econ)) == round(cor)
+print(ifelse(check, "The correlations are the same!", "Oops, the correlations are not the same."))
+
+# Generate summary statistics 
+print("Economists Summary Stats")
+summary(df1$econ)
+print("Accountant Summary Stats")
+summary(df1$accnt)
+```
+
+All of these results are in line with what we expect, so let's move on to visualizing the distributions using ggplot2.
+
+```{r plot}
+# Visualize the distributions
+df1 %>% 
+    gather(key = id, value = c('econ', 'accnt')) %>% # reshapes the data to a 'long' format
+    dplyr::rename(value = 'c("econ", "accnt")') %>% # rename the column for ease of use
+    ggplot(aes(x=value, color=id)) + # call the ggplot function
+        geom_density(fill="white", alpha=0.5, position="identity") # make a density plot
+```
+
+The density graph above clearly shows what Prof. Black higlighted in class - that though the MEAN of the accountant's salary is higher than that of the economists, the economists distribution is broader, i.e. has fatter tails, meaning that if you are on the high end of the distribution, you are more likely to earn a higher salary as an economist. We know that these distributions are highly correlated (think: the skillset to be good at economics is similar, though not exactly the same as the skillset to be good at accounting), meaning that if you are at the high end of one distribution, you are likely to be at the high end of the other. 
+
+### Picking a Career
+
+Our assumption is that every person will choose to be an accountant or an economist based on what will maximize their salary. We will assign job labels strictly based on where an individual will earn more, i.e. Y<sub>i</sub> = max(Y<sub>e,i</sub>, Y<sub>a,i</sub>)
+
+```{r jobs}
+# Assign job labels
+df1 <- df1 %>% mutate(job = ifelse(econ > accnt, "econ", "accnt"))
+
+# Take a look at the change to the dataframe using head
+head(df1)
+```
+
+### Results
+
+```{r results}
+# Make results dataframe
+results <- df1 %>% 
+            group_by(job) %>% # Group all of the rows with the same "job" together
+            summarise('Economist Earnings' = mean(econ), 'Accountant Earnings' = mean(accnt),
+                      n=n()) %>% # Calculate means and counts for economicts and accountants
+            mutate(job = c("Accountant", "Economist")) %>% # add labels
+            t() # transpose
+
+colnames(results) <- c('Accountant', 'Economist')
+
+results <- as.data.frame(results) %>%
+            slice(2:4) %>%
+            mutate(
+              x= c('Economist Earnings', 'Accountant Earnings', 'n')
+            ) %>%
+            dplyr::select(x, Accountant, Economist)
+
+results
+```
+
+The columns are the job, and the rows are potential earnings. So in this case the (Economicst, Economist Earnings) cell is the average salary of economists that we observe in the real world. The (Economist, Accounting Earnings) is a COUNTERFACTUAL that is unobserved in the world, i.e. the average salary of economist had they become accountants instead. As discussed in lecture, a naive observer would simply would look at the observed salaries in (i.e. (Economicst, Economist Earnings) and (Accountant, Accountant Earnings)) and think that everyone should be an economist. However, the Roy model helps us understand that individuals are making rational choices about their employment based on characteristics that aren't easily observable. This is how economic and statistical models can help us make sense of what we see in the world.
+
+For a final check, calculate the weighted average of our observed and counterfactual outcomes (i.e., economists who became economists and accountants if they had become economists) and see if they come close to the distribution means we set initially. That is, close to 65k for accountants and 60k for economists. Spoiler: it works!

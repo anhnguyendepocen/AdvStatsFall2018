@@ -1,0 +1,131 @@
+---
+title: "Discrete Distributions"
+author: "Claire Herdeman"
+date: "10/14/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Discrete Distributions
+For a more detailed discussion of all of these distributions, see the supplementary textbook "Mathematical Statistics and Applications" (Wackerly) Chapter 3. 
+
+Note: these commands are desgined to be run sequentially because I use many of the same variable names in examples throughout (n for sample size, p for probability). If you run a later command and then look at an earlier example, you will have to reset those values for the example to work properly. If that is confusing, you can clear your environment and start fresh by running the command `rm(list = ls())` in your console.
+
+### Bernoulli (Binary) RVs
+
+Bernoulli or binary random variables are binary events that occur with probability p. A Bernoulli Trial is a single observation of that event. What are the possible outcomes? What is the expected outcome (i.e. the expected value)?
+
+Note that this is a special case (and the simplist version) of the Binomial distribution. To get a sense of the R commands relating to Binomial distributions, run the command `?Binomial` in your console (capitalization matters).
+```{r bernoulli}
+# Set the probability of a "success" to some value p
+p <- 0.25
+
+# Simulate a Bernoulli trial
+rbinom(1,1,p)
+
+# Find the expected value
+dbinom(1,1,p)
+```
+What happens when you vary the value of p? 
+
+### Binomial Distribution
+
+Now we are observing n Bernoulli trials. There are two ways to think about this:
+
+Given the known properties of the distribution, what are we likely to observe?
+Given the known properties of the distribution, what is the probability that we observe a certain event?
+
+```{r binomial}
+# Set the probability of a "success" to some value p
+p = 0.3 # Probability of success
+n = 4 # Number of observations
+k = 1 # Number of successes
+
+# Make n draws from a binomial distribution with probability of success p
+rbinom(n,1,p)
+
+# Calculate the probability that k successes of probability p occur in n trials 
+dbinom(k,n,p)
+
+# Calculate the probability that up to k successes of probability p occur in n trials
+dbinom(0, n, p) + dbinom(1, n, p)
+pbinom(k,n,p)
+```
+
+What happens as you vary p, n, and k?
+
+### Professor Black's Example
+Suppose the unemployment rate is 3.8%.  If you take a random sample of 100 people, what is the probability you observe no unemployed, one or zero, two or fewer, three or fewer, or four or fewer?
+
+```{r example}
+# What are the values of p, n defined in the problem?
+p <- 0
+n <- 0
+
+# What is the probably that you observe 0 unemployed people?
+k <- 0
+dbinom(k, n, p)
+
+# What is the probably that you observe 1 unemployed person?
+k <- 1 
+dbinom(k, n, p)
+
+# What is the probability that you observe at least 1?
+dbinom(0, n, p) + dbinom(1, n, p)
+pbinom(1, n, p)
+
+# Do the rest yourself!
+```
+
+### Multinomial Distribution
+
+I'm not making an example here, but mess around with it yourself! Run the command `?Multinomial` in your console to find the functions that R has available.
+
+### Geometric Distribution
+
+This distribution is typically used to model time to failure. 
+
+```{r geom1}
+# Board example
+p <- 0.1
+x <- 3
+
+# What is the probability that failure occurs on the 4th day?
+dgeom(x, p)
+
+# What is the probability that failure accurs on or before the 4th day?
+dgeom(0, p) + dgeom(1, p) + dgeom(2, p) + dgeom(3, p)
+pgeom(x, p)
+
+# What is the probability that falure occurs AFTER the 4th day?
+1 - pgeom(x, p)
+```
+
+In this example, let's say that that probability that a Harris student has a problem set due on any given day is 20%. What is the probability that 7 days will pass without a problem set before one is due (i.e. that a pset is due on the 8th day)? What is the probability that a problem set is is due on or before the 8th day? After the 8th day?
+
+```{r geom2}
+# What are p and x, as defined in the probem?
+p <- 0
+x <- 0
+  
+# What is the probability 
+dgeom(x, p)
+```
+
+### Poisson Distribution
+
+Suppose that an average of 3 cars enter an intersection in a minute. What is the probability that 0 cars enter the intersection? 1? 4? 10? At most 10? More than 10? What if an average of 5 cars enter the intersection in a minute?
+```{r geom2}
+# What is p?
+lambda <- 3
+k <- 0
+  
+# What is the probability 
+dpois(k, lambda)
+
+# What
+ppois(k, lambda)
+```

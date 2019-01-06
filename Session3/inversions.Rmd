@@ -1,0 +1,33 @@
+---
+title: "TA Session 3"
+author: "Claire Herdeman"
+date: "10/21/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('tidyverse')
+```
+
+## R Markdown
+
+```{r part1}
+set.seed(10212018)
+
+samples <- 100000
+
+df <- data_frame(uni = runif(samples)) %>%
+  mutate(
+    dist = 2*sqrt(uni)
+  )
+
+head(df)
+```
+```{r part2}
+df %>% ggplot() + 
+  geom_density(aes(x = uni)) +
+  geom_density(aes(x = dist), colour = "blue")
+
+df %>% summarise_all(funs(mean))
+```

@@ -1,0 +1,70 @@
+---
+title: "Hypothesis Testing"
+author: "Claire Herdeman"
+date: "11/12/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Problem Statement
+We have a "gambling machine" that we believe gives positive results 25% of the time, i.e. p = 0.25. Using the binomial distribution, we can calculate the probability that each number of successes, 0 through 32, occurs. We will also calculate for p = 0.5.
+
+```{r data}
+n = 32
+p1 = 0.25
+p2 = 0.5
+
+gambling <- data_frame(num = 0:32,
+           p25 = dbinom(num, n, p1),
+           p50 = dbinom(num, n, p2),
+           c25 = pbinom(num, n, p1),
+           c50 = pbinom(num, n, p2))
+
+head(gambling)
+tail(gambling)
+```
+
+
+## Plot the distribution
+Let see what the pmfs look like for the different parameters p.
+
+```{r pmf}
+gpmf <- gambling %>% 
+  ggplot() +
+  geom_point(aes(x = num, y = p25), color='blue') +
+  geom_point(aes(x = num, y = p50), color='red') 
+
+gpmf
+```
+
+```{r cdf}
+gcdf <- gambling %>% 
+  ggplot() +
+  geom_point(aes(x = num, y = c25), color='blue') +
+  geom_point(aes(x = num, y = c50), color='red') 
+
+gcdf
+```
+
+## Define significance level
+Significance levels are typically defined at 5%. We are asking: what is the probability that we would see the observed data under the null hpyothesis? We think that if that probability is less than the significance level (i.e. 5%), 
+```{r Ha_less}
+sig <- 0.05
+
+# Test Ha: p < 0.25
+gcdf + geom_hline(yintercept = sig)
+```
+
+```{r Ha_greater}
+# Test Ha: p > 0.25
+gcdf + geom_hline(yintercept = 1 - sig)
+```
+
+```{r Ha_neq}
+# Test Ha: p != 0.25
+gcdf + geom_hline(yintercept = sig/2) + geom_hline(yintercept = 1 - sig/2)
+```

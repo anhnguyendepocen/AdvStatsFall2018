@@ -1,0 +1,96 @@
+---
+title: "Roy Model"
+output: html_document
+---
+
+### Monday, October 8 5:00 - 6:20 PM
+
+## Setup
+
+The section loads libraries that we will need to use to run the code below.
+
+```{r setup}
+# For this session we will load the tidyverse, a commonly used set of R libraries
+# Find more information here: https://www.tidyverse.org/packages/
+library('tidyverse')
+library('MASS')
+```
+
+## Roy Model
+
+In the context of Prof. Black's lecture, the Roy Model was used to motivate the need for economic and statistical models to underly our analysis of observed phenomena in public policy. To (hopefully) illustrate the model as well as some of the power of computational tools, here is a brief simulation of the model. The expectation is NOT that you can put this together yourself right now.
+
+### Generate Random Data
+
+The first step is to generate random data from two correlated distributions with the characteristics described in class, i.e. Economist earnings are normally distributed with mean = 60k and stdev = 10k, and Accountant earnings are normally distributed with mean = 65k and st dev = 5k. This generation will produce data that pairs draws from both distribution, i.e. we are observing for every theoretical individual in our sample both their potential earnings as an accountant and their potential earnings as an economist. 
+
+```{r data}
+set.seed(10042018)
+samples <- 30000 # Sample size or size of population
+cor <- 0.86 # correlation coefficient
+
+# Generate correlated std normal random sample using the mvnorm function from MASS package
+data <- mvrnorm(n=samples, mu=c(0, 0), Sigma=matrix(c(1, cor, cor, 1), nrow=2), empirical=TRUE)
+
+# Convert to dataframe
+df1 <- dplyr::as_data_frame(data)
+
+# Make the dataframe easier to use 
+df1 <- df1 %>% dplyr::rename(accnt = V1, econ = V2) # rename columns
+
+# Change distributions from std normal to those specified in lecture:
+# Accounting ~ N(65000, 5000)
+# Economics ~ N(60000, 10000)
+mu_econ <- 60000
+sigma_econ <- 10000
+mu_accnt <- 65000
+sigma_accnt <- 5000
+
+df1 <- df1 %>% mutate(
+        accnt = accnt*sigma_accnt + mu_accnt, # update accounting variable
+        econ = econ*sigma_econ + mu_econ # update econ variable
+)
+```
+
+### Sanity Checks
+
+Let's run a few checks to make sure data looks reasonable. First we'll use the `head` and `tail` commands to get a look at the data. Then, we will make sure that the correlation between the accoutant and economist distributions is 0.86, the value we set when we generated the data, using the `cor` command. Finally, we will run the `summarise` command to see the mean, min, max, and quartiles of each of the distributions.
+
+```{r sanity}
+# Look at the first and last 6 rows of the dataframe
+head(df1)
+tail(df1)
+
+# Compare the correlation we set to the correlation we calculate
+check <- round(cor(df1$accnt, df1$econ)) == round(cor)
+print(ifelse(check, "The correlations are the same!", "Oops, the correlations are not the same."))
+
+# Generate summary statistics 
+print("Economists Summary Stats")
+summary(df1$econ)
+print("Accountant Summary Stats")
+summary(df1$accnt)
+```
+
+All of these results are in line with what we expect, so let's move on to visualizing the distributions using ggplot2.
+
+```{r plot}
+# Visualize the distributions
+df1 %>% 
+    gather(key = id, value = c('econ', 'accnt')) %>% # reshapes the data to a 'long' format
+    dplyr::rename(value = 'c("econ", "accnt")') %>% # rename the column for ease of use
+    ggplot(aes(x=value, color=id)) + # call the ggplot function
+        geom_density(fill="white", alpha=0.5, position="identity") # make a density plot
+```
+```{r plot2}
+# Contour plot overlayed on heat map image of results
+df1 %>% 
+  ggplot(aes(x = accnt, y = econ)) +
+  geom_density2d() +      
+  #scale_alpha_continuous(limits=c(0,1000),breaks=seq(0,1000,by=1000)) +
+  geom_point(colour="red",alpha=0.01)
+
+bivn.kde <- kde2d(df1$accnt/1000, df1$econ/1000, n = 50)   # from MASS package
+image(bivn.kde)
+contour(bivn.kde, add = TRUE)
+```

@@ -1,0 +1,80 @@
+---
+title: "dplyr intro"
+author: "Claire Herdeman"
+date: "10/29/2018"
+output: pdf_document
+---
+## Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Load
+```{r cars}
+df <- mtcars
+
+# Summarise numerical values in df
+summary(df)
+```
+
+## Select
+Subset columns of your dataframe
+```{r select}
+# Select one column
+df1 <- df %>%
+  dplyr::select(mpg)
+
+# Select a group of columns
+df %>%
+  dplyr::select(one_of(c("mpg", "gear")))
+```
+## Filter
+Select rows based on a logical condition
+```{r Filter}
+df %>% 
+  filter(
+    mpg > 20
+  )
+```
+
+## Mutate
+Make new variables and add them to your df
+```{r mutate}
+df %>% 
+  mutate(
+    wt_mpg = wt/mpg
+  )
+```
+
+## Summarise
+Summarise varibles using aggregator functions
+```{r summarise}
+df %>% 
+  summarise(
+    avg_wt = mean(wt)
+  )
+
+df %>% 
+  summarise_all(
+    funs(mean, max)
+  )
+```
+
+## Group By
+Must be used with an aggregate function, groups your data
+```{r group}
+df %>% 
+  group_by(disp) %>%
+  summarise(avg_wt = mean(wt))
+```
+
+## Chain some stuff
+You can chain a bunch of stuff together!
+```{r group}
+df %>% 
+  dplyr::select(one_of(c("mpg", "gear", "disp"))) %>% glimpse()
+  group_by(disp) %>%
+  summarise_all(funs(mean))
+```

@@ -1,0 +1,41 @@
+---
+title: "TA Session 3"
+author: "Claire Herdeman"
+date: "10/21/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('tidyverse')
+```
+
+## Inverse Transformations
+
+```{r part1}
+set.seed(10212018) # Set seed for pseudo-random number generate
+
+n <- 100000 # Set sample size, i.e. number of draws
+
+# Generate random sample of size n from the uniform distribution, transform using inverse function
+df <- data_frame(uni = runif(n)) %>%
+  mutate(
+    dist = 2*sqrt(uni),
+    dist2 = (1/2)*uni
+  )
+
+# Show Data
+head(df)
+```
+
+## Plots
+
+Graph the generated distributions to show the input and output of the transformation
+```{r part2}
+df %>% ggplot() + 
+  geom_density(aes(x = uni)) + # Plot the distribution of the randomly generatd points in black
+  geom_density(aes(x = dist), colour = "blue") # "" of the ransformed poitns in blue
+
+
+df %>% summarise_all(funs(mean))
+```
