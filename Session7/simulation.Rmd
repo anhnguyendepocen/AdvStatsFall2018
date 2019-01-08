@@ -1,0 +1,92 @@
+---
+title: "Simulation"
+author: "Claire Herdeman"
+date: "11/18/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Simulation: Appeals to CLT
+
+Run a simulation of a binomial distribution with p = 0.6
+
+```{r df}
+# Set seed
+set.seed(10182018)
+# Set Parameters
+p = 0.6 # probability of success
+n = 10 # number of trials
+rep = 10000 # number of replications
+
+# initialize empty df
+df10 <- data_frame(obs=1:n)
+
+for (i in 1:rep) {
+  print(i)
+  cola <- paste('col', i, sep= '_')
+  df10[[cola]] <- rbinom(n, 1, p)
+}
+
+head(df10)
+```
+
+adsadf
+```{r means}
+means10 <- df10 %>% 
+  select(contains("_")) %>% 
+  summarise_all(mean) %>%
+  t %>%
+  as.data.frame
+
+head(means10,10)
+```
+
+```{r plot}
+means10 %>% ggplot(aes(x=V1)) +
+  geom_density()
+```
+
+Now try with n = 100
+
+```{r df}
+# Set seed
+set.seed(10182018)
+# Set Parameters
+p = 0.6 # probability of success
+n1 = 100 # number of trials
+rep = 10000 # number of replications
+
+# initialize empty df
+df100 <- data_frame(obs=1:n1)
+
+for (i in 1:rep) {
+  print(i)
+  cola <- paste('col', i, sep= '_')
+  df100[[cola]] <- rbinom(n, 1, p)
+}
+
+head(df100)
+```
+
+```{r means}
+means100 <- df100 %>% 
+  select(contains("_")) %>% 
+  summarise_all(mean) %>%
+  t %>%
+  as.data.frame
+
+head(means100,10)
+```
+
+```{r plot}
+means100 %>% ggplot(aes(x=V1)) +
+  geom_density()
+```
+
+```{r plot}
+means <- bind_cols(means10, means100)
+```

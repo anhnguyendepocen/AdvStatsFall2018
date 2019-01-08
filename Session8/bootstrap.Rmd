@@ -1,0 +1,150 @@
+---
+title: "Bootstrap"
+author: "Claire Herdeman"
+date: "12/3/2018"
+output: pdf_document
+---
+
+```{r setup, warning=FALSE}
+library(tidyverse)
+```
+
+```{r load}
+df <- read.csv("~/Downloads/ChicagoMSAWomen.csv")
+levels(df$uhrswork)[83] <- 99
+levels(df$uhrswork)[84] <- 0
+df$uhrswork <- as.numeric(as.character(df$uhrswork))
+set.seed(12032018)
+```
+
+## Estimate $\hat{F}$
+
+With bootstrap simulations, we are estimating the distribution of a variable in the population using out sample. Using the Chicago MSA data, we will estimate the distribution of the hours worked (uhrswork) variable. 
+```{r cdf}
+df <- df %>% arrange(uhrswork)
+N <- length(df$uhrswork)
+dist <- df %>% 
+  count(uhrswork) %>% 
+  mutate(prop = n/N,
+         cdf = cumsum(prop))
+
+head(dist)
+
+dist %>% ggplot() +
+  geom_col(aes(x = uhrswork, y = prop), fill = "blue") +
+  geom_step(aes(x = uhrswork, y = cdf)) +
+  xlim(0, 100) +
+  scale_x_continuous(breaks=c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100))
+
+```
+
+## Sampling from the data
+To generate bootstrap estimates, we sample from the $\hat{F}$ distribution, which can be done in R using the sample command.
+```{r cars}
+# Set the sample size
+n <- 10
+# Note that bootstrap estimates require resampling, so must have replace = T 
+sample(df$uhrswork, size = n, replace = TRUE)
+```
+
+## Bootstrap Draws
+To generate a boostrap distribution, pick B, the number of bootstrap resamples and sample from the data.
+```{r pressure, results="hide"}
+B = 10000 # number of bootstrap replications
+
+# initialize empty df
+df10 <- data_frame(obs=1:n)
+
+for (i in 1:B) {
+  print(i)
+  cola <- paste('col', i, sep= '_')
+  df10[[cola]] <- sample(df$uhrswork, size = n, replace = TRUE)
+}
+```
+
+Summarise each for the parameter of interest (in this case the mean)
+```{r summarise10}
+# Summarise each sample
+means10 <- df10 %>% 
+  select(contains("_")) %>% 
+  summarise_all(mean) %>%
+  t %>%
+  as.data.frame
+
+head(means10,10)
+
+# Plot distribution
+means10 %>% ggplot(aes(x=V1)) +
+  geom_density(color='black') +
+  xlim(20, 70)
+
+# Bootstrap estimate of the mean:
+bootstrap10 <- means10 %>% summarise_all(funs(mean))
+```
+
+```{r n_1000, results="hide"}
+n <- 1000
+# initialize empty df
+df1000 <- data_frame(obs=1:n)
+
+for (i in 1:B) {
+  print(i)
+  cola <- paste('col', i, sep= '_')
+  df1000[[cola]] <- sample(df$uhrswork, size = n, replace = TRUE)
+}
+```
+
+```{r summarise1000}
+# Summarise each sample
+means1000 <- df1000 %>% 
+  select(contains("_")) %>% 
+  summarise_all(mean) %>%
+  t %>%
+  as.data.frame
+
+head(means1000,10)
+
+# Plot distribution
+means1000 %>% ggplot(aes(x=V1)) +
+  geom_density(color='black') +
+  xlim(20, 70)
+
+bootstrap1000 <- means1000 %>% summarise_all(funs(mean))
+```
+
+
+```{r compare}
+mean(df$uhrswork)
+bootstrap10
+bootstrap1000
+```
+
+```{r n_all, results="hide"}
+n <- length(df$uhrswork)
+# initialize empty df
+dflength <- data_frame(obs=1:n)
+
+for (i in 1:B) {
+  print(i)
+  cola <- paste('col', i, sep= '_')
+  dflength[[cola]] <- sample(df$uhrswork, size = n, replace = TRUE)
+}
+```
+
+```{r summariseall}
+# Summarise each sample
+meanslength <- dflength %>% 
+  select(contains("_")) %>% 
+  summarise_all(mean) %>%
+  t %>%
+  as.data.frame
+
+head(meanslength,10)
+
+# Plot distribution
+meanslength %>% ggplot(aes(x=V1)) +
+  geom_density(color='black') +
+  xlim(20, 70)
+
+bootstraplength <- meanslength %>% summarise_all(funs(mean))
+```

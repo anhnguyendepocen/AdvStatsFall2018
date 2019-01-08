@@ -1,0 +1,60 @@
+---
+title: "Regression"
+author: "Claire Herdeman"
+date: "11/18/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Binary Variables and Regression
+
+To illustrate the binary variable case, generate fake data the represents sex and height
+
+```{r df}
+# Made dataframe
+df <- data_frame(female=c(0,0,0,1,1,1), height=c(152,140,168,120,136,125))
+df
+
+# Find average height by group
+df %>% group_by(female) %>% summarise_all(mean)
+```
+
+
+Now run a regression of our binary variable on height: 
+
+```{r reg}
+# Run a linear regression
+r <- lm(height ~ female, df)
+rs <- summary(r)
+# Show summary of regression output
+rs
+```
+
+## Plot it
+
+```{r plot}
+df %>% ggplot(aes(female, height)) + 
+  geom_point() + 
+  geom_abline(intercept = rs$coefficients['(Intercept)','Estimate'], 
+              slope = rs$coefficients['female','Estimate'])
+```
+
+## Testing
+H_0: The means of the two groups are equal
+H_A: They are not equal
+
+In the binary case, that means that we need to check whether the difference between the two group means is 0, i.e. whether $\beta_1$ = 0.
+
+The t-test is reported in the output table, how is it calculated?
+```{r tests}
+beta1_hat <- rs$coefficients['female','Estimate']
+se_beta1_hat <- rs$coefficients['female','Std. Error']
+ttest <- beta1_hat/se_beta1_hat
+ttest
+```
+
+Note that in this case the F-test is $t^2$ (test it and compare with the summary regression output).
